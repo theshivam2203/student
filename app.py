@@ -59,7 +59,7 @@ if uploaded_file is not None:
                 'Level of use of AI based tools',
                 'Technology based Tutoring System',
                 'Organisational Performance',
-                "Student’s Performance"
+                "Student's Performance"
             ]
 
             # Apply the function to each specified column in Sheet 1
