@@ -1,0 +1,1 @@
+This repository requires Python version 3.10.12 or above to ensure compatibility and leverage the latest features and enhancements provided by the Python language. Please ensure that you have the appropriate Python version installed before proceeding.# student
