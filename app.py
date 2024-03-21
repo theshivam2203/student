@@ -42,12 +42,18 @@ if uploaded_file is not None:
                 # Calculate the range width
                 range_width = (column.max() - column.min()) / num_ranges
 
-                # Create a function to assign values from 1 to 5 to each range
+                # Modify the assign_value function to use qualitative descriptions
                 def assign_value(value):
                     for i in range(1, num_ranges + 1):
                         if value <= column.min() + i * range_width:
-                            return i
-                    return num_ranges
+                            return {
+                                1: "Very Low",
+                                2: "Low",
+                                3: "Average",
+                                4: "High",
+                                5: "Very High"
+                            }[i]
+                    return "Very High"  # In case the value exceeds all ranges
 
                 # Apply the function to create a new column with the assigned values
                 column_name = column.name.replace(" ", "_") + "_Range"
@@ -66,8 +72,14 @@ if uploaded_file is not None:
             for col in columns_to_process:
                 calculate_mean_and_assign_range(df[col])
 
-            # Calculate frequency and percentage of occurrences of values 1, 2, 3, 4, and 5 in all range columns in Sheet 1
-            value_counts_df = pd.DataFrame(index=range(1, num_ranges + 1))
+            # Calculate frequency and percentage of occurrences of values within each range in Sheet 1
+            value_counts_df = pd.DataFrame(index=[
+                "Very Low",
+                "Low",
+                "Average",
+                "High",
+                "Very High"
+            ])
 
             # Initialize DataFrame columns for frequency and percentage
             for col in df.columns:
@@ -78,19 +90,13 @@ if uploaded_file is not None:
             # Calculate frequency and percentage for each range column in Sheet 1
             for col in df.columns:
                 if col.endswith('_Range'):
-                    value_counts = df[col].value_counts().sort_index()
+                    value_counts = df[col].value_counts().reindex(["Very Low", "Low", "Average", "High", "Very High"]).fillna(0)
                     total_count = value_counts.sum()
                     
                     # Update DataFrame with frequency and percentage values
-                    for index, value in value_counts.items():  # Use items() for series
+                    for index, value in value_counts.items():
                         value_counts_df.at[index, col + '_Frequency'] = value
                         value_counts_df.at[index, col + '_Percentage'] = (value / total_count) * 100
-
-            # Add a column for the range values
-            value_counts_df['Value'] = value_counts_df.index
-
-            # Reorder columns with 'Value' as the first column
-            value_counts_df = value_counts_df[['Value'] + [col for col in value_counts_df.columns if col != 'Value']]
 
             # output_dfs['Processed_Data'] = df
             output_dfs['Value_Counts'] = value_counts_df
@@ -100,7 +106,7 @@ if uploaded_file is not None:
     with pd.ExcelWriter(output_file_path) as writer:
         for sheet_name, df in output_dfs.items():
             if sheet_name == 'Value_Counts':
-                df.to_excel(writer, index=False, sheet_name=sheet_name, columns=value_counts_df.columns)
+                df.to_excel(writer, index=True, sheet_name=sheet_name, columns=value_counts_df.columns)
             else:
                 df.to_excel(writer, index=False, sheet_name=sheet_name)
 
